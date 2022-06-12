@@ -17,7 +17,8 @@ async function main() {
   const AliceFactory = await AliceToken.deploy();
 
   const BobToken = await ethers.getContractFactory("BobToken");
-  const BobFactory = await BobToken.deploy(AliceFactory.address);
+  const interest = 0.02;
+  const BobFactory = await BobToken.deploy(AliceFactory.address, interest);
 }
 
 main()
