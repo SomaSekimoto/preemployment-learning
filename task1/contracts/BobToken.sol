@@ -16,20 +16,15 @@ contract BobToken is ERC20, Ownable {
     using SafeERC20 for IERC20;
     IERC20 public token;
     uint256 private interest;
-
     uint256 public interestRate;
+    // アドレスごとの最後に利子を配った時間を記録
+    mapping(address => uint256) public lastRewardedTime;
 
-    constructor(address _token, uint256 rate) public ERC20("BobToken", "BBT") {
+    abstract constructor(address _token, uint256 rate) public ERC20("BobToken", "BBT") {
         token = IERC20(_token);
         setInterestRate(rate);
     }
 
-    // constructor(uint256 totalSupply) public ERC20("BobToken", "BBT") {
-    //     console.log("totalSupply is %s", totalSupply);
-    //     _mint(msg.sender, totalSupply);
-    //     owner = msg.sender;
-    //     console.log("contract owner is %s", owner);
-    // }
     function balance() public view returns (uint256) {
         return token.balanceOf(address(this));
     }
@@ -43,14 +38,27 @@ contract BobToken is ERC20, Ownable {
         // Mint BobToken to msg sender
         interest = _amount.mul(interestRate) / 10**18;
         _mint(msg.sender, interest);
+        lastRewardedTime[msg.sender] = block.timestamp;
     }
 
     function withdraw(uint256 _amount) public {
-        // Burn BobTokens from msg sender
-        _burn(msg.sender, _amount);
-
         // Transfer MyTokens from this smart contract to msg sender
         token.safeTransfer(msg.sender, _amount);
+        if (token.balanceOf(msg.sender) == 0) {
+            delete lastRewardedTime[msg.sender];
+        }
+    }
+
+    function getReward() public {
+        uint256 balance = token.balanceOf(msg.sender);
+        require(balance > 0, "deposit balance cannot be 0");
+        uint256 nextRewardTime = lastRewardedTime[msg.sender] + 1 days;
+        require(
+            nextRewardTime > block.timestamp,
+            "1 day has not passed since you got reward last time."
+        );
+        _mint(msg.sender, (this.balance().mul(interestRate)) / 10**18);
+        lastRewardedTime[msg.sender] = block.timestamp;
     }
 
     function setInterestRate(uint256 _rate) public onlyOwner {
