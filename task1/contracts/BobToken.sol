@@ -20,7 +20,7 @@ contract BobToken is ERC20, Ownable {
     // アドレスごとの最後に利子を配った時間を記録
     mapping(address => uint256) public lastRewardedTime;
 
-    abstract constructor(address _token, uint256 rate) public ERC20("BobToken", "BBT") {
+    constructor(address _token, uint256 rate) public ERC20("BobToken", "BBT") {
         token = IERC20(_token);
         setInterestRate(rate);
     }
