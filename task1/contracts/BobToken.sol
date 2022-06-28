@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: UNLICENSED
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.1;
 
 import "hardhat/console.sol";
 
@@ -20,13 +20,34 @@ contract BobToken is ERC20, Ownable {
     // アドレスごとの最後に利子を配った時間を記録
     mapping(address => uint256) public lastRewardedTime;
 
-    constructor(address _token, uint256 rate) public ERC20("BobToken", "BBT") {
+    // constructor(address _token, uint256 rate) public ERC20("BobToken", "BBT") {
+    constructor(
+        address _token,
+        uint256 divisor,
+        uint256 dividend
+    ) public ERC20("BobToken", "BBT") {
         token = IERC20(_token);
-        setInterestRate(rate);
+        // setInterestRate(rate);
+        setInterestRate(divisor, dividend);
+    }
+
+    function transferB(address _address, uint256 _amount) public {
+        require(_amount > 0, "amount cannot be 0");
+        transfer(_address, _amount * 1e18);
+    }
+
+    function approveB(address _address, uint256 _amount) public {
+        require(_amount > 0, "amount cannot be 0");
+        approve(_address, _amount * 1e18);
     }
 
     function balance() public view returns (uint256) {
         return token.balanceOf(address(this));
+    }
+
+    function approve(uint256 _amount) public {
+        require(_amount > 0, "amount cannot be 0");
+        token.approve(address(this), _amount * 1e18);
     }
 
     function deposit(uint256 _amount) public {
@@ -34,16 +55,17 @@ contract BobToken is ERC20, Ownable {
         require(_amount > 0, "amount cannot be 0");
 
         // Transfer AliceToken to smart contract
-        token.safeTransferFrom(msg.sender, address(this), _amount);
+        token.safeTransferFrom(msg.sender, address(this), _amount * 1e18);
         // Mint BobToken to msg sender
-        interest = _amount.mul(interestRate) / 10**18;
+        interest = _amount * interestRate;
+
         _mint(msg.sender, interest);
         lastRewardedTime[msg.sender] = block.timestamp;
     }
 
     function withdraw(uint256 _amount) public {
         // Transfer MyTokens from this smart contract to msg sender
-        token.safeTransfer(msg.sender, _amount);
+        token.safeTransfer(msg.sender, _amount * 1e18);
         if (token.balanceOf(msg.sender) == 0) {
             delete lastRewardedTime[msg.sender];
         }
@@ -57,11 +79,15 @@ contract BobToken is ERC20, Ownable {
             nextRewardTime > block.timestamp,
             "1 day has not passed since you got reward last time."
         );
-        _mint(msg.sender, (this.balance().mul(interestRate)) / 10**18);
+
+        _mint(msg.sender, ((this.balance() / 1e18) * interestRate));
         lastRewardedTime[msg.sender] = block.timestamp;
     }
 
-    function setInterestRate(uint256 _rate) public onlyOwner {
-        interestRate = _rate;
+    function setInterestRate(uint256 divisor, uint256 dividend)
+        public
+        onlyOwner
+    {
+        interestRate = (divisor * 1e18) / dividend;
     }
 }
