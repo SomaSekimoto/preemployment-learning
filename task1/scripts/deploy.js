@@ -1,11 +1,3 @@
-// const MyToken = artifacts.require("AliceToken")
-
-// module.exports = async function (deployer, network, accounts) {
-//   // Deploy MyToken
-//   await deployer.deploy(MyToken)
-//   const AliceToken = await MyToken.deployed()
-// }
-
 async function main() {
   const [deployer] = await ethers.getSigners();
 
