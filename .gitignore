@@ -3,3 +3,7 @@ package-lock.json
 cache
 artifacts
 .env
+.cache
+dist
+yarn.lock
+yarn-error.log
